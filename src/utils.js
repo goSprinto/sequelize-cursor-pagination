@@ -99,7 +99,7 @@ const isValidCursor = (cursor, order) => {
 const recursivelyGetPaginationQuery = (order, cursor) => {
   const directionValueIndex = order[0].length - 1;
   const currentOp =
-    order[0][directionValueIndex].toLowerCase() === 'desc' ? Op.lt : Op.gt;
+    order[0][directionValueIndex].toLowerCase().split(' ')[0] === 'desc' ? Op.lt : Op.gt;
 
   // supporting only below format
   // [
