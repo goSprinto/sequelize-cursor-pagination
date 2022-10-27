@@ -66,7 +66,7 @@ const normalizeOrder = (order, primaryKeyField, omitPrimaryKeyFromOrder) => {
 const reverseOrder = (order) => {
   return order.map((orderItem) => {
     orderItem[orderItem.length - 1] =
-      orderItem[orderItem.length - 1].toLowerCase() === 'desc' ? 'ASC' : 'DESC';
+      orderItem[orderItem.length - 1].toLowerCase().split(' ')[0] === 'desc' ? 'ASC' : 'DESC';
     return orderItem;
   });
 };
