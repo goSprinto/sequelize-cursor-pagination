@@ -99,7 +99,7 @@ const isValidCursor = (cursor, order) => {
 const recursivelyGetPaginationQuery = (order, cursor) => {
   const directionValueIndex = order[0].length - 1;
   // if cursor[0] is null then we set a not equal operator
-  const currentOp = cursor[0] ? (order[0][directionValueIndex].toLowerCase().split(' ')[0] === 'desc' ? Op.lt : Op.gt) : Op.ne;
+  const currentOp = cursor[0] === null ? (order[0][directionValueIndex].toLowerCase().split(' ')[0] === 'desc' ? Op.lt : Op.gt) : Op.ne;
 
   // supporting only below format
   // [
