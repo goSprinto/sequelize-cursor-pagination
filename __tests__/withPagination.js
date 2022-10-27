@@ -22,11 +22,11 @@ const generateTestData = () => {
   ]);
 
   return Promise.all([
-    Test.create({ counter: 4, id: 3, extra: 3, personId: 1 }),
-    Test.create({ counter: 4, id: 2, extra: 4, personId: 2 }),
-    Test.create({ counter: 1, id: 5, extra: 3, personId: 3 }),
-    Test.create({ counter: 3, id: 1, extra: 4, personId: 4 }),
-    Test.create({ counter: 2, id: 4, extra: 3, personId: 5 }),
+    Test.create({ counter: 3, id: 1, extra: 4, personId: 4, isValid: true }),
+    Test.create({ counter: 4, id: 2, extra: 4, personId: 2, isValid: false}),
+    Test.create({ counter: 4, id: 3, extra: 3, personId: 1, isValid: null }),
+    Test.create({ counter: 2, id: 4, extra: 3, personId: 5, isValid: false }),
+    Test.create({ counter: 1, id: 5, extra: 3, personId: 3, isValid: null }),
   ]);
 };
 
@@ -46,6 +46,7 @@ beforeEach(async () => {
       allowNull: true,
       references: { model: Person, key: 'id' },
     },
+    isValid: Sequelize.BOOLEAN,
   });
 
   Person.hasMany(Test, { foreignKey: 'personId' });
@@ -209,6 +210,30 @@ test('paginates correctly with where', async () => {
 
   expectIdsToEqual(result, [5, 4, 3]);
   expect(result.totalCount).toBe(3);
+});
+
+test('paginates correctly with boolean columns desc', async () => {
+  await generateTestData();
+
+  const order = [['isValid', 'DESC NULLS FIRST']];
+
+  let result = await Test.paginate({ order, limit: 5 });
+
+  // expecting order - [fnull -> true -> false] -> [ordered by id asc]
+  expectIdsToEqual(result, [3,5,1,2,4]);
+  expect(result.totalCount).toBe(5);
+});
+
+test('paginates correctly with boolean asc', async () => {
+  await generateTestData();
+
+  const order = [['isValid', 'ASC NULLS LAST']];
+
+  let result = await Test.paginate({ order, limit: 5 });
+
+  // expecting order - [false -> true -> null] -> [ordered by id asc]
+  expectIdsToEqual(result, [2, 4, 1, 3, 5]);
+  expect(result.totalCount).toBe(5);
 });
 
 test('paginates correctly with different order formats', async () => {
