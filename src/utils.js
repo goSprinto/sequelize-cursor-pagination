@@ -1,5 +1,8 @@
 let { Op } = require('sequelize');
 
+const ASC_NULLS_LAST = 'ASC NULLS LAST'
+const DESC_NULLS_FIRST = 'DESC NULLS FIRST'
+
 if (!Op) {
   // Support older versions of sequelize
   Op = {
@@ -63,10 +66,14 @@ const normalizeOrder = (order, primaryKeyField, omitPrimaryKeyFromOrder) => {
     : ensurePrimaryKeyFieldInOrder(normalized, normalizedPrimaryKeyField);
 };
 
-const reverseOrder = (order) => {
+const reverseOrder = (order, enforceNullOrder) => {
   return order.map((orderItem) => {
-    orderItem[orderItem.length - 1] =
-      orderItem[orderItem.length - 1].toLowerCase() === 'desc' ? 'ASC' : 'DESC';
+    const keyIndexToUpdate = orderItem.length - 1
+    if(orderItem[keyIndexToUpdate].toLowerCase().split(' ')[0] === 'desc') {
+      orderItem[keyIndexToUpdate] = enforceNullOrder ? ASC_NULLS_LAST : 'ASC'
+      return orderItem;
+    }
+    orderItem[keyIndexToUpdate] = enforceNullOrder ? DESC_NULLS_FIRST : 'DESC'
     return orderItem;
   });
 };
@@ -98,8 +105,11 @@ const isValidCursor = (cursor, order) => {
 
 const recursivelyGetPaginationQuery = (order, cursor) => {
   const directionValueIndex = order[0].length - 1;
-  const currentOp =
-    order[0][directionValueIndex].toLowerCase().split(' ')[0] === 'desc' ? Op.lt : Op.gt;
+
+  const orderValue = order[0][directionValueIndex]
+  const currentOp = orderValue.toLowerCase().split(' ')[0] === 'desc' ? Op.lt : Op.gt;
+  
+  let operatorFilter = { [currentOp]: cursor[0] }
 
   // supporting only below format
   // [
@@ -131,13 +141,18 @@ const recursivelyGetPaginationQuery = (order, cursor) => {
   } else {
     const key = _getColumnName(order);
 
+    // https://github.com/goSprinto/sequelize-cursor-pagination#ordering-columns-with-null-values
+    if(cursor[0] === null &&  orderValue === DESC_NULLS_FIRST) {
+      operatorFilter = { [Op.ne]: cursor[0] }
+    }
+  
+    if(cursor[0] !== null && orderValue === ASC_NULLS_LAST) {
+      operatorFilter = {[Op.or]: [{[Op.is]: null}, operatorFilter] }
+    }
+
     return {
       [Op.or]: [
-        {
-          [key]: {
-            [currentOp]: cursor[0],
-          },
-        },
+        { [key]: operatorFilter},
         {
           [key]: cursor[0],
           ...recursivelyGetPaginationQuery(order.slice(1), cursor.slice(1)),

@@ -14,6 +14,7 @@ const withPagination =
       methodName = 'paginate',
       primaryKeyField = 'id',
       omitPrimaryKeyFromOrder = false,
+      enforceNullOrder = true,
     } = options;
 
     const paginate = async ({
@@ -30,7 +31,7 @@ const withPagination =
         omitPrimaryKeyFromOrder,
       );
 
-      order = before ? reverseOrder(order) : order;
+      order = before ? reverseOrder(order, enforceNullOrder) : order;
 
       const cursor = after
         ? parseCursor(after)
