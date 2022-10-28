@@ -110,53 +110,6 @@ const thirdResult = await Counter.paginate({
 });
 ```
 
-## Ordering Columns With Null Values
-The creation of cursor for pagination depends on primary key. But, when primary ordering is required on another column and if it happens to contain null values, the pagination query doesn't work as expected. This happens as `lt`, `gt` dont get applied to null values. We have added logic to take care of this scenario.
-
-A sample of the pagination where clause that gets appended to the main query is provided below,
-
-**Note**: Considered a boolean column `isTracked` on which primary ordering is expected.
-
-### Descending 
-Order: [null -> true -> false]
-
-If `cursor[0]` is null, we need to make a union of all results that are greater than
-the primary key and all the non-null values.
-
-```javascript
-where: {
-  [Op.or]: [
-    { isTracked: { [Op.ne]: null } },
-    {
-      isTracked: null,
-      pk: { [Op.gt]: 'ed1a5338-7620-4386-9501-85ea08e04a37' }
-    }
-  ]
-}
-```
-### Ascending
-
-Order: [false -> true -> null]
-
-If cursor[0] is non-null, we need to make a union of all results that are less than the primary key and all the null values + greater than the column value filter (false in the below sample).
-
-```javascript
-where: {
-  [Op.or]: [
-    {
-      isTracked: {
-          [Op.or]: [ { [Op.is]: null }, { [Op.gt]: false } ]
-        },
-      },
-      { 
-        isTracked: false,
-        pk: { [Op.lt]: 'ed1a5338-7620-4386-9501-85ea08e04a37'
-      }
-    }
-  ]
-}
-```
-
 ## Running tests
 
 ```
