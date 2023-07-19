@@ -72,9 +72,13 @@ const reverseOrder = (order, enforceNullOrder) => {
   return order.map((orderItem) => {
     const keyIndexToUpdate = orderItem.length - 1
 
-    // reverse order for DESC_NULLS_LAST should be ASC_NULLS_FIRST
+    // reverse order for DESC_NULLS_LAST should be ASC_NULLS_FIRST and vice versa
     if(orderItem[keyIndexToUpdate].toUpperCase() === DESC_NULLS_LAST) {
       orderItem[keyIndexToUpdate] = ASC_NULLS_FIRST
+      return orderItem;
+    }
+    if(orderItem[keyIndexToUpdate].toUpperCase() === ASC_NULLS_FIRST) {
+      orderItem[keyIndexToUpdate] = DESC_NULLS_LAST
       return orderItem;
     }
     if(orderItem[keyIndexToUpdate].toLowerCase().split(' ')[0] === 'desc') {
@@ -94,7 +98,6 @@ const getFieldValue = (instance, orderItem) => {
   try {
     const fieldValue = instance[orderItem[0]['as']][orderItem[1]]
     if(!fieldValue) {
-      // when fieldValue is undefined, we try to read from dataValues
       return instance['dataValues'][orderItem[0]['as']][0]['dataValues'][orderItem[1]]
     } else {
       return fieldValue
