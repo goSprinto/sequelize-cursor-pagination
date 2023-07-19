@@ -236,26 +236,38 @@ test('paginates correctly with boolean asc', async () => {
   expect(result.totalCount).toBe(5);
 });
 
-test('paginates correctly with boolean asc', async () => {
+test('paginates correctly with boolean asc nulls first', async () => {
+  await generateTestData();
+
+  const order = [['isValid', 'ASC NULLS FIRST']];
+
+  let result = await Test.paginate({ order, limit: 5 });
+
+  // expecting order - [false -> true -> null] -> [ordered by id asc]
+  expectIdsToEqual(result, [3, 5, 2, 4, 1]);
+  expect(result.totalCount).toBe(5);
+});
+
+test('paginates correctly with boolean desc nulls last', async () => {
   await generateTestData();
 
   const order = [['isValid', 'DESC NULLS LAST']];
 
   let result = await Test.paginate({ order, limit: 5 });
 
-  // expecting order - [true -> false -> null] -> [ordered by id desc nulls last]
+  // expecting order - [true -> false -> null] -> [ordered by id desc]
   expectIdsToEqual(result, [1, 2, 4, 3, 5]);
   expect(result.totalCount).toBe(5);
 });
 
-test('paginates correctly with boolean asc', async () => {
+test('paginates correctly with boolean desc nulls first', async () => {
   await generateTestData();
 
   const order = [['isValid', 'DESC NULLS FIRST']];
 
   let result = await Test.paginate({ order, limit: 5 });
 
-  // expecting order - [null -> true -> false] -> [ordered by id desc nulls first]
+  // expecting order - [null -> true -> false] -> [ordered by id desc]
   expectIdsToEqual(result, [3, 5, 1, 2, 4]);
   expect(result.totalCount).toBe(5);
 });
