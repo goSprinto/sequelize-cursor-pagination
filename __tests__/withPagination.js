@@ -236,6 +236,30 @@ test('paginates correctly with boolean asc', async () => {
   expect(result.totalCount).toBe(5);
 });
 
+test('paginates correctly with boolean asc', async () => {
+  await generateTestData();
+
+  const order = [['isValid', 'DESC NULLS LAST']];
+
+  let result = await Test.paginate({ order, limit: 5 });
+
+  // expecting order - [true -> false -> null] -> [ordered by id desc nulls last]
+  expectIdsToEqual(result, [1, 2, 4, 3, 5]);
+  expect(result.totalCount).toBe(5);
+});
+
+test('paginates correctly with boolean asc', async () => {
+  await generateTestData();
+
+  const order = [['isValid', 'DESC NULLS FIRST']];
+
+  let result = await Test.paginate({ order, limit: 5 });
+
+  // expecting order - [null -> true -> false] -> [ordered by id desc nulls first]
+  expectIdsToEqual(result, [3, 5, 1, 2, 4]);
+  expect(result.totalCount).toBe(5);
+});
+
 test('paginates correctly with different order formats', async () => {
   await generateTestData();
 
