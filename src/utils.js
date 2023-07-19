@@ -94,6 +94,7 @@ const getFieldValue = (instance, orderItem) => {
   try {
     const fieldValue = instance[orderItem[0]['as']][orderItem[1]]
     if(!fieldValue) {
+      // when fieldValue is undefined, we try to read from dataValues
       return instance['dataValues'][orderItem[0]['as']][0]['dataValues'][orderItem[1]]
     } else {
       return fieldValue
