@@ -1,7 +1,9 @@
 let { Op } = require('sequelize');
 
-const ASC_NULLS_LAST = 'ASC NULLS LAST'
 const DESC_NULLS_FIRST = 'DESC NULLS FIRST'
+const ASC_NULLS_FIRST = 'ASC NULLS FIRST'
+const ASC_NULLS_LAST = 'ASC NULLS LAST'
+const DESC_NULLS_LAST = 'DESC NULLS LAST'
 
 if (!Op) {
   // Support older versions of sequelize
@@ -69,6 +71,16 @@ const normalizeOrder = (order, primaryKeyField, omitPrimaryKeyFromOrder) => {
 const reverseOrder = (order, enforceNullOrder) => {
   return order.map((orderItem) => {
     const keyIndexToUpdate = orderItem.length - 1
+
+    // reverse order for DESC_NULLS_LAST should be ASC_NULLS_FIRST and vice versa
+    if(orderItem[keyIndexToUpdate].toUpperCase() === DESC_NULLS_LAST) {
+      orderItem[keyIndexToUpdate] = ASC_NULLS_FIRST
+      return orderItem;
+    }
+    if(orderItem[keyIndexToUpdate].toUpperCase() === ASC_NULLS_FIRST) {
+      orderItem[keyIndexToUpdate] = DESC_NULLS_LAST
+      return orderItem;
+    }
     if(orderItem[keyIndexToUpdate].toLowerCase().split(' ')[0] === 'desc') {
       orderItem[keyIndexToUpdate] = enforceNullOrder ? ASC_NULLS_LAST : 'ASC'
       return orderItem;
@@ -82,13 +94,26 @@ const serializeCursor = (payload) => {
   return Buffer.from(JSON.stringify(payload)).toString('base64');
 };
 
+const getFieldValue = (instance, orderItem) => {
+  try {
+    const fieldValue = instance[orderItem[0]['as']][orderItem[1]]
+    if(!fieldValue) {
+      return instance['dataValues'][orderItem[0]['as']][0]['dataValues'][orderItem[1]]
+    } else {
+      return fieldValue
+    }
+  } catch(e) {
+    return null
+  }
+}
+
 const createCursor = (instance, order) => {
   // order
   // const fields
   const payload = order.map((orderItem) => {
     let field;
     if (typeof orderItem[0] == 'object') {
-      return instance[orderItem[0]['as']][orderItem[1]];
+      return getFieldValue(instance, orderItem)
     } else {
       field = orderItem[0];
     }
@@ -142,11 +167,11 @@ const recursivelyGetPaginationQuery = (order, cursor) => {
     const key = _getColumnName(order);
 
     // https://github.com/goSprinto/sequelize-cursor-pagination#ordering-columns-with-null-values
-    if(cursor[0] === null &&  orderValue === DESC_NULLS_FIRST) {
+    if(cursor[0] === null &&  [DESC_NULLS_FIRST, ASC_NULLS_FIRST].includes(orderValue)) {
       operatorFilter = { [Op.ne]: cursor[0] }
     }
   
-    if(cursor[0] !== null && orderValue === ASC_NULLS_LAST) {
+    if(cursor[0] !== null && [DESC_NULLS_LAST,ASC_NULLS_LAST].includes(orderValue)) {
       operatorFilter = {[Op.or]: [{[Op.is]: null}, operatorFilter] }
     }
 
