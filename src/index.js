@@ -5,6 +5,7 @@ const {
   normalizeOrder,
   getPaginationQuery,
   reverseOrder,
+  isNil,
 } = require('./utils');
 
 const withPagination =
@@ -23,6 +24,7 @@ const withPagination =
       after,
       before,
       limit,
+      selectColumns,
       ...queryArgs
     } = {}) => {
       let order = normalizeOrder(
@@ -44,11 +46,14 @@ const withPagination =
       const paginationWhere = paginationQuery
         ? { [Op.and]: [paginationQuery, where] }
         : where;
+      
+      const paginationAttributes = !isNil(selectColumns) ? { attributes: selectColumns } : {};
 
       const paginationQueryOptions = {
         where: paginationWhere,
         limit,
         order,
+        ...paginationAttributes,
         ...queryArgs,
       };
 

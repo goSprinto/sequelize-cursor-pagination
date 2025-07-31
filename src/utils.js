@@ -195,6 +195,10 @@ const getPaginationQuery = (order, cursor) => {
   return recursivelyGetPaginationQuery(order, cursor);
 };
 
+const isNil = (value) => {
+  return value === null || value === undefined;
+};
+
 module.exports = {
   Op,
   parseCursor,
@@ -204,4 +208,5 @@ module.exports = {
   getPaginationQuery,
   createCursor,
   reverseOrder,
+  isNil,
 };
