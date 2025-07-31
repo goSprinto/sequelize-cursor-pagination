@@ -196,7 +196,7 @@ const getPaginationQuery = (order, cursor) => {
 };
 
 const isNil = (value) => {
-  return value === null || value === undefined;
+  return value === null || value === undefined || (Array.isArray(value) && value.length === 0);
 };
 
 module.exports = {
