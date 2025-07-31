@@ -8,6 +8,43 @@ const {
   isNil,
 } = require('./utils');
 
+/**
+ * Adds a paginate method to a Sequelize model to support cursor-based pagination.
+ *
+ * This implementation supports selecting specific columns using `selectColumns`, which avoids
+ * unnecessary `GROUP BY` clauses and improves performance in queries that do not require
+ * aggregation. In cases where aggregate functions like `SUM`, `COUNT`, etc. are needed, use
+ * `attributes` instead.
+ *
+ * @function paginate
+ * @async
+ * @param {Object} options - Pagination options
+ * @param {Array} [options.order] - Ordering for the result set, e.g., [['createdAt', 'DESC']]
+ * @param {Object} [options.where] - Filter conditions for the query
+ * @param {string} [options.after] - Cursor string to fetch results after a specific node
+ * @param {string} [options.before] - Cursor string to fetch results before a specific node
+ * @param {number} [options.limit] - Maximum number of records to return
+ * @param {Array<string>} [options.selectColumns] - Specific columns to select; avoids GROUP BY and improves performance for non-aggregated queries
+ * @param {...Object} [queryArgs] - Additional Sequelize `findAll` query options
+ *
+ * @returns {Promise<Object>} An object containing:
+ * - `totalCount` {number}: Total number of matching records (ignores pagination)
+ * - `edges` {Array<Object>}: Array of nodes and their cursors
+ * - `pageInfo` {Object}: Pagination metadata
+ *    - `hasNextPage` {boolean}
+ *    - `hasPreviousPage` {boolean}
+ *    - `startCursor` {string|null}
+ *    - `endCursor` {string|null}
+ *
+ * @example
+ * await db.User.paginate({
+ *   where: { isActive: true },
+ *   limit: 10,
+ *   order: [['createdAt', 'DESC']],
+ *   selectColumns: ['id', 'email', 'createdAt'],
+ *   after: 'cursorString',
+ * });
+ */
 const withPagination =
   (options = {}) =>
   (Model) => {
